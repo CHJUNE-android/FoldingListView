@@ -9,8 +9,7 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import java.util.HashSet
 
-class FoldingCellListAdapter(context: Context, objects: List<ClipData.Item>) :
-    ArrayAdapter<ClipData.Item>(context, 0, objects) {
+class FoldingCellListAdapter(context: Context, objects: List<ClipData.Item>) : ArrayAdapter<ClipData.Item>(context, 0, objects) {
 
     private val unfoldedIndexes = HashSet<Int>()
     var defaultRequestBtnClickListener: View.OnClickListener? = null

@@ -15,8 +15,6 @@ class Item {
 
     var requestBtnClickListener: View.OnClickListener? = null
 
-    constructor() {}
-
     constructor(
         price: String,
         pledgePrice: String,
@@ -33,7 +31,7 @@ class Item {
         this.requestsCount = requestsCount
         this.date = date
         this.time = time
-    }
+    }//해당 변수값들 받아서 초기화
 
     override fun equals(o: Any?): Boolean {
         if (this === o) return true

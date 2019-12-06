@@ -15,18 +15,50 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.core.view.ViewCompat
 import java.util.*
+/*
+* cell.xml 파일에 쓰는 뷰.
+* 커스텀 RelativeLayout임
+* */
 
 class FoldingCell @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) :
-    RelativeLayout(context, attrs, defStyleAttr) {
+) : RelativeLayout(context, attrs, defStyleAttr) {//커스텀 뷰 생성하고자 할 때 생성자에 받아야할 인자들
 
+    /*
+    전체 구조
+    unfold(skipAnimation: Boolean)
+    fold(skipAnimation: Boolean)
+    toggle(skipAnimation: Boolean)
+    prepareViewsForAnimation(
+    -----------------------------------------------------
+    viewHeights: ArrayList<Int>?,
+    titleViewBitmap: Bitmap,
+    contentViewBitmap: Bitmap
+    ): ArrayList<FoldingCellView>
+    -----------------------------------------------------
+    calculateHeightsForAnimationParts(titleViewHeight: Int,
+    contentViewHeight: Int,
+    additionalFlipsCount: Int
+    ): ArrayList<Int>
+    -----------------------------------------------------
+    createBackSideView(height: Int): ImageView
+    createImageViewFromBitmap(bitmap: Bitmap): ImageView
+    measureViewAndGetBitmap(view: View, parentWidth: Int): Bitmap
+    createAndPrepareFoldingContainer(): LinearLayout
+    -----------------------------------------------------
+    startExpandHeightAnimation(viewHeights: ArrayList<Int>?, partAnimationDuration: Int)
+    startCollapseHeightAnimation(viewHeights: ArrayList<Int>?, partAnimationDuration: Int)
+    -----------------------------------------------------
+    createAnimationChain(animationList: List<Animation>, animationObject: View)
+    -----------------------------------------------------
+    startFoldAnimation(\foldingCellElements: ArrayList<FoldingCellView>, foldingLayout: ViewGroup, part90degreeAnimationDuration: Int, animationEndListener: AnimationEndListener)
+    startUnfoldAnimation(foldingCellElements: ArrayList<FoldingCellView>, foldingLayout: ViewGroup, part90degreeAnimationDuration: Int, animationEndListener: AnimationEndListener)
+     */
     // state variables
-    var isUnfolded: Boolean = false
-        private set
-    private var mAnimationInProgress: Boolean = false
+    var isUnfolded: Boolean = false //펼쳐져있는가
+    private var mAnimationInProgress: Boolean = false //애니메이션 진행중?
 
     // default values
     private val DEF_ANIMATION_DURATION = 1000
@@ -41,13 +73,12 @@ class FoldingCell @JvmOverloads constructor(
     private var mCameraHeight = DEF_CAMERA_HEIGHT
 
     init {
-
-        val styledAttrs = context.obtainStyledAttributes(attrs, R.styleable.FoldingCell)
+        val styledAttrs = context.obtainStyledAttributes(attrs, R.styleable.FoldingCell)//resource폴더의 attrs파일에 정의해둔 속성들을 사용하겠다는 말
         if (styledAttrs != null) {
-            val count = styledAttrs.indexCount
-            for (i in 0 until count) {
-                val attr = styledAttrs.getIndex(i)
-                if (attr == R.styleable.FoldingCell_animationDuration) {
+            val count = styledAttrs.indexCount //정의해야할 속성의 개수 파악하여 리턴
+            for (i in 0 until count) {//속성 정의 다할때까지 반복
+                val attr = styledAttrs.getIndex(i)//속성들 중 i번째 인덱스를 attr로 지정.
+                if (attr == R.styleable.FoldingCell_animationDuration) {//해당 인덱스 속성이 animationDuration인 경우
                     this.mAnimationDuration = styledAttrs.getInt(
                         R.styleable.FoldingCell_animationDuration,
                         DEF_ANIMATION_DURATION
@@ -111,12 +142,12 @@ class FoldingCell @JvmOverloads constructor(
      *
      * @param skipAnimation if true - change state of cell instantly without animation
      */
-    fun unfold(skipAnimation: Boolean) {
-        if (isUnfolded || mAnimationInProgress) return
+    fun unfold(skipAnimation: Boolean) {//펼치기
+        if (isUnfolded || mAnimationInProgress) return//펼쳐져있거나 애니메이션 진행중인경우 해당 메소드 실행 X
 
         // get main content parts
-        val contentView = getChildAt(0) ?: return
-        val titleView = getChildAt(1) ?: return
+        val contentView = getChildAt(0) ?: return //getChildAt(index) 지정된 위치의 뷰를 반환. 없을경우 null 반환,  ?:는 엘비스 연산자로, 좌항이 null인 경우 우항을 디폴트로 실행
+        val titleView = getChildAt(1) ?: return // FoldingCell이 감싸는 자식들의 순서가 인자에 해당함.
 
         // hide title and content views
         titleView.visibility = View.GONE
@@ -128,7 +159,7 @@ class FoldingCell @JvmOverloads constructor(
 
         if (skipAnimation) {
             contentView.visibility = View.VISIBLE
-            this@FoldingCell.isUnfolded = true
+            this@FoldingCell.isUnfolded = true//펼쳐져있다고 표시
             this@FoldingCell.mAnimationInProgress = false
             this.layoutParams.height = contentView.height
         } else {
@@ -157,7 +188,7 @@ class FoldingCell @JvmOverloads constructor(
                         contentView.visibility = View.VISIBLE
                         foldingLayout.visibility = View.GONE
                         this@FoldingCell.removeView(foldingLayout)
-                        this@FoldingCell.isUnfolded = true
+                        this@FoldingCell.isUnfolded = true//펼쳐짐
                         this@FoldingCell.mAnimationInProgress = false
                         ViewCompat.setHasTransientState(this@FoldingCell, true)
                     }
@@ -166,7 +197,7 @@ class FoldingCell @JvmOverloads constructor(
             startExpandHeightAnimation(heights, part90degreeAnimationDuration * 2)
             this.mAnimationInProgress = true
         }
-    }
+    }//펼치기
 
     /**
      * Fold cell with (or without) animation
@@ -174,7 +205,7 @@ class FoldingCell @JvmOverloads constructor(
      * @param skipAnimation if true - change state of cell instantly without animation
      */
     fun fold(skipAnimation: Boolean) {
-        if (!isUnfolded || mAnimationInProgress) return
+        if (!isUnfolded || mAnimationInProgress) return//접혀있을때나 애니메이션 진행중이라면 작동 X
 
         // get basic views
         val contentView = getChildAt(0) ?: return
@@ -192,7 +223,7 @@ class FoldingCell @JvmOverloads constructor(
             contentView.visibility = View.GONE
             titleView.visibility = View.VISIBLE
             this@FoldingCell.mAnimationInProgress = false
-            this@FoldingCell.isUnfolded = false
+            this@FoldingCell.isUnfolded = false//접혀있다고 표시
             this.layoutParams.height = titleView.height
         } else {
             ViewCompat.setHasTransientState(this, true)
@@ -224,23 +255,23 @@ class FoldingCell @JvmOverloads constructor(
                         foldingLayout.visibility = View.GONE
                         this@FoldingCell.removeView(foldingLayout)
                         this@FoldingCell.mAnimationInProgress = false
-                        this@FoldingCell.isUnfolded = false
+                        this@FoldingCell.isUnfolded = false//접혀있다고 표시
                         ViewCompat.setHasTransientState(this@FoldingCell, true)
                     }
                 })
             startCollapseHeightAnimation(heights, part90degreeAnimationDuration * 2)
             this.mAnimationInProgress = true
         }
-    }
+    }//접기
 
 
     /**
      * Toggle current state of FoldingCellLayout
      */
-    fun toggle(skipAnimation: Boolean) {
-        if (this.isUnfolded) {
+    fun toggle(skipAnimation: Boolean) {//애니메이션 skip여부를 인자로 받는다
+        if (this.isUnfolded) {//펼쳐져있다면
             this.fold(skipAnimation)
-        } else {
+        } else {//접혀있다면
             this.unfold(skipAnimation)
             this.requestLayout()
         }
@@ -253,11 +284,7 @@ class FoldingCell @JvmOverloads constructor(
      * @param contentViewBitmap bitmap from content view
      * @return list of FoldingCellViews with bitmap parts
      */
-    protected fun prepareViewsForAnimation(
-        viewHeights: ArrayList<Int>?,
-        titleViewBitmap: Bitmap,
-        contentViewBitmap: Bitmap
-    ): ArrayList<FoldingCellView> {
+    protected fun prepareViewsForAnimation(viewHeights: ArrayList<Int>?, titleViewBitmap: Bitmap, contentViewBitmap: Bitmap): ArrayList<FoldingCellView> {
         check(!(viewHeights == null || viewHeights.isEmpty())) { "ViewHeights array must be not null and not empty" }
 
         val partsList = ArrayList<FoldingCellView>()!!
@@ -298,11 +325,7 @@ class FoldingCell @JvmOverloads constructor(
      * @param additionalFlipsCount count of additional flips (after first one), set 0 for auto
      * @return list of calculated heights
      */
-    protected fun calculateHeightsForAnimationParts(
-        titleViewHeight: Int,
-        contentViewHeight: Int,
-        additionalFlipsCount: Int
-    ): ArrayList<Int> {
+    protected fun calculateHeightsForAnimationParts(titleViewHeight: Int, contentViewHeight: Int, additionalFlipsCount: Int): ArrayList<Int> {
         val partHeights = ArrayList<Int>()
         val additionalPartsTotalHeight = contentViewHeight - titleViewHeight * 2
         check(additionalPartsTotalHeight >= 0) { "Content View height is too small" }
