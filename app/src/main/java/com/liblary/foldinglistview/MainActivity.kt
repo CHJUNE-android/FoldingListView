@@ -48,11 +48,11 @@ class MainActivity : AppCompatActivity() {
         mainListView.setAdapter(adapter)
 
         // set on click event listener to list view
-        mainListView.setOnItemClickListener(AdapterView.OnItemClickListener { adapterView, view, pos, l ->
+        mainListView.setOnItemClickListener(AdapterView.OnItemClickListener { adapterView, view, position, l ->
             // toggle clicked cell state
             (view as FoldingCell).toggle(false)
             // register in adapter that state for selected cell is toggled
-            adapter.registerToggle(pos)
+            adapter.registerToggle(position)//해당 아이템이 접혔는지 펼쳐졌는지 adapter가 알 수 있도록 처리
         })
     }
 }
