@@ -172,7 +172,7 @@ class FoldingCell @JvmOverloads constructor(
         } else {
             ViewCompat.setHasTransientState(this, true)
             // create layout container for animation elements
-            val foldingLayout = createAndPrepareFoldingContainer()
+            val foldingLayout = createAndPrepareFoldingContainer()//필요 공간 확보
             this.addView(foldingLayout)
             // calculate heights of animation parts
             val heights = calculateHeightsForAnimationParts(
@@ -182,9 +182,10 @@ class FoldingCell @JvmOverloads constructor(
             )
             // create list with animation parts for animation
             val foldingCellElements =
-                prepareViewsForAnimation(heights, bitmapFromTitleView, bitmapFromContentView)
+                prepareViewsForAnimation(heights, bitmapFromTitleView, bitmapFromContentView)//FoldingCellView 담은 리스트(각 접히는 영역만큼의 크기로 쪼개어져 ArrayList에 FoldingCellView로 들어가있음)
+
             // start unfold animation with end listener
-            val childCount = foldingCellElements.size
+            val childCount = foldingCellElements.size//해당 FoldingCellView 분할 수
             val part90degreeAnimationDuration = mAnimationDuration / (childCount * 2)
             startUnfoldAnimation(
                 foldingCellElements,
@@ -192,11 +193,11 @@ class FoldingCell @JvmOverloads constructor(
                 part90degreeAnimationDuration,
                 object : AnimationEndListener() {
                     override fun onAnimationEnd(animation: Animation) {
-                        contentView.visibility = View.VISIBLE
+                        contentView.visibility = View.VISIBLE//애니매이션 끝나면 해당 contentView는 다 펼쳐져 보이도록, titleView는 안보이도록
                         foldingLayout.visibility = View.GONE
                         this@FoldingCell.removeView(foldingLayout)
                         this@FoldingCell.isUnfolded = true//펼쳐짐
-                        this@FoldingCell.mAnimationInProgress = false
+                        this@FoldingCell.mAnimationInProgress = false//애니매이션 진행중 false
                         ViewCompat.setHasTransientState(this@FoldingCell, true)
                     }
                 })
@@ -293,23 +294,25 @@ class FoldingCell @JvmOverloads constructor(
      */
     protected fun prepareViewsForAnimation(viewHeights: ArrayList<Int>?, titleViewBitmap: Bitmap, contentViewBitmap: Bitmap): ArrayList<FoldingCellView> {
         check(!(viewHeights == null || viewHeights.isEmpty())) { "ViewHeights array must be not null and not empty" }
-
+        //viewHeight - 잘게쪼개진 높이들 나열된 ArrayList
         val partsList = ArrayList<FoldingCellView>()!!
 
         val partWidth = titleViewBitmap.width
         var yOffset = 0
         for (i in viewHeights.indices) {//viewHeights List에 대한 인덱스만큼 반복
             val partHeight = viewHeights[i]//해당 아이템에 대한 높이 반환
+            //첫 아이템은 titleView에 대한 높이, 두번째도 titleView에 대한 높이, 세번째부터 나머지 높이 반환
             val partBitmap = Bitmap.createBitmap(partWidth, partHeight, Bitmap.Config.ARGB_8888)//비트맵 만들어서
-            val canvas = Canvas(partBitmap)//캔버스에 그린다!
+            val canvas = Canvas(partBitmap)//캔버스에 심어둔다
             val srcRect = Rect(0, yOffset, partWidth, yOffset + partHeight)//시작점 0,yOffset부터 너비 partWidth로 yOffset + partHeight부분까지 해당하는 영역
+            //처음에는 0,0에서 partWidth, partHeight까지의 사각형
             val destRect = Rect(0, 0, partWidth, partHeight)//시작점 0,0부터 너비 psrtWidth, 높이 partHeight에 해당하는 영역
-            canvas.drawBitmap(contentViewBitmap, srcRect, destRect, null)
-            val backView = createImageViewFromBitmap(partBitmap)
+            canvas.drawBitmap(contentViewBitmap, srcRect, destRect, null)//contentViewBitmap 을 srcRect 위치,크기에 해당하는 영역을 지우고, dest 위치,크기에 해당하는 영역만큼 그린다.
+            val backView = createImageViewFromBitmap(partBitmap)//partBitmap의 이미지와 크기를 가진 ImageView를 생성한다.
             var frontView: ImageView? = null
-            if (i < viewHeights.size - 1) {
-                frontView =
-                    if (i == 0) createImageViewFromBitmap(titleViewBitmap) else createBackSideView(
+            if (i < viewHeights.size - 1) {//i가 마지막 인덱스라면 실행 x
+                frontView =//전면에 보여지는 뷰는
+                    if (i == 0) createImageViewFromBitmap(titleViewBitmap) else createBackSideView(//i가 0인경우에는 titleViewBitmap에 해당하는 만큼만 보여지도록 하고, 0이상이면 뒷면을 표시하도록함
                         viewHeights[i + 1]
                     )
             }
@@ -334,7 +337,7 @@ class FoldingCell @JvmOverloads constructor(
         }
 
         return partsList
-    }
+    }//보여지게 될 이미지에 대한 준비, 뒷면에 대한 것도 준비.
 
     /**
      * Calculate heights for animation parts with some logic
@@ -344,27 +347,29 @@ class FoldingCell @JvmOverloads constructor(
      * @param additionalFlipsCount count of additional flips (after first one), set 0 for auto
      * @return list of calculated heights
      */
-    protected fun calculateHeightsForAnimationParts(titleViewHeight: Int, contentViewHeight: Int, additionalFlipsCount: Int): ArrayList<Int> {
+    protected fun calculateHeightsForAnimationParts(titleViewHeight: Int, contentViewHeight: Int, additionalFlipsCount: Int): ArrayList<Int> {//접힌상태 높이와 펼친상태 높이 넘어옴
         val partHeights = ArrayList<Int>()
-        val additionalPartsTotalHeight = contentViewHeight - titleViewHeight * 2
+        val additionalPartsTotalHeight = contentViewHeight - titleViewHeight * 2//contentView 높이 - titleView의 2배 높이 -> 작게 접히는 부분에 해당하는 높이.
         check(additionalPartsTotalHeight >= 0) { "Content View height is too small" }
         // add two main parts - guarantee first flip
-        partHeights.add(titleViewHeight)
+        partHeights.add(titleViewHeight)//titleViewHeight 두번 넣어서 최소 한번 접히는건 확실히 하도록함.
         partHeights.add(titleViewHeight)
 
         // if no space left - return
-        if (additionalPartsTotalHeight == 0)
-            return partHeights
+        if (additionalPartsTotalHeight == 0)//한번 접히는 부분 이외의 나머지 영역이 없다면
+            return partHeights//그대로 반환
+
+        //나머지 영역이 있다면(크기가 어떨지는 모른다!)
 
         // if some space remained - use two different logic
-        if (additionalFlipsCount != 0) {
+        if (additionalFlipsCount != 0) {//additionalFlipsCount가 뭔가?
             // 1 - additional parts count is specified and it is not 0 - divide remained space
-            val additionalPartHeight = additionalPartsTotalHeight / additionalFlipsCount
-            val remainingHeight = additionalPartsTotalHeight % additionalFlipsCount
+            val additionalPartHeight = additionalPartsTotalHeight / additionalFlipsCount//나머지부분을 additionalFlipsCount로 나눔
+            val remainingHeight = additionalPartsTotalHeight % additionalFlipsCount//나누고 남은 나머지
 
             check(additionalPartHeight + remainingHeight <= titleViewHeight) { "Additional flips count is too small" }
             for (i in 0 until additionalFlipsCount)
-                partHeights.add(additionalPartHeight + if (i == 0) remainingHeight else 0)
+                partHeights.add(additionalPartHeight + if (i == 0) remainingHeight else 0)//나머지 높이를 Flipscount 개수만큼 나눠 partHeights에 추가.
         } else {
             // 2 - additional parts count isn't specified or 0 - divide remained space to parts with title view size
             val partsCount = additionalPartsTotalHeight / titleViewHeight
@@ -376,7 +381,7 @@ class FoldingCell @JvmOverloads constructor(
         }
 
         return partHeights
-    }
+    }//애니매이션 구현될 부분에 대한 높이를 계산하여 반환함.
 
     /**
      * Create image view for display back side of flip view
@@ -388,9 +393,9 @@ class FoldingCell @JvmOverloads constructor(
         val imageView = ImageView(context)
         imageView.setBackgroundColor(mBackSideColor)
         imageView.layoutParams =
-            RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height)
+            LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height)
         return imageView
-    }
+    }//폴더가 접힐때 뒷면을 보여주는 이미지뷰
 
     /**
      * Create image view for display selected bitmap
@@ -401,9 +406,9 @@ class FoldingCell @JvmOverloads constructor(
     protected fun createImageViewFromBitmap(bitmap: Bitmap): ImageView {
         val imageView = ImageView(context)
         imageView.setImageBitmap(bitmap)
-        imageView.layoutParams = RelativeLayout.LayoutParams(bitmap.width, bitmap.height)
+        imageView.layoutParams = LayoutParams(bitmap.width, bitmap.height)
         return imageView
-    }
+    }//넘어온 bitmap정보를 ImageView로 반환한다.
 
     /**
      * Create bitmap from specified View with specified with
@@ -592,18 +597,20 @@ class FoldingCell @JvmOverloads constructor(
      * @param part90degreeAnimationDuration animation duration for 90 degree rotation
      * @param animationEndListener          animation end callback
      */
-    protected fun startUnfoldAnimation(
-        foldingCellElements: ArrayList<FoldingCellView>, foldingLayout: ViewGroup,
-        part90degreeAnimationDuration: Int, animationEndListener: AnimationEndListener
+    protected fun startUnfoldAnimation(//펼치기 애니매이션 시작
+        foldingCellElements: ArrayList<FoldingCellView>, //펼쳐진 하나의 contentView를 n등분한 뷰들을 갖고있는 ArrayList
+        foldingLayout: ViewGroup,//titleView가 들어간 뷰
+        part90degreeAnimationDuration: Int, //지속시간같은데 part90은 뭔 의미?
+        animationEndListener: AnimationEndListener//애니매이션 끝나고 변경값 알림
     ) {
         var nextDelay = 0
-        for (i in foldingCellElements.indices) {
+        for (i in foldingCellElements.indices) {//FoldingCellView 등분한만큼의 인덱스 갖고있음
             val cell = foldingCellElements[i]
-            cell.visibility = View.VISIBLE
-            foldingLayout.addView(cell)
+            cell.visibility = View.VISIBLE//해당 셀부분 보이도록함
+            foldingLayout.addView(cell)//foldingLayout에 해당 셀 추가.(titleView를 갖고있는 foldingLayout에 cell을 하나 하나 추가해가는 방식임.
             // if not first(top) element - animate whole view
             if (i != 0) {
-                val foldAnimation = FoldAnimation(
+                val foldAnimation = FoldAnimation(//FoldAnimation클래스 분석 필요
                     FoldAnimation.FoldAnimationMode.UNFOLD_DOWN,
                     mCameraHeight,
                     part90degreeAnimationDuration.toLong()
