@@ -75,8 +75,8 @@ class FoldAnimation(
     }
 
     override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-        val camera = mCamera
-        val matrix = t.matrix
+        val camera = mCamera//카메라 뭐하는 놈인지 공부 필요
+        val matrix = t.matrix//매트릭스도 공부 필요
         val fromDegrees = mFromDegrees
         val degrees = fromDegrees + (mToDegrees - fromDegrees) * interpolatedTime
 
