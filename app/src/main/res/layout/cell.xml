@@ -10,7 +10,7 @@
     folding-cell:cameraHeight="30">
 
     <!-- CONTENT (UNFOLDED) LAYOUT (MUST BE AT LEAST 2x times BIGGER than content layout bellow)-->
-    <include layout="@layout/cell_content_layout" />
+    <include layout="@layout/cell_content_layout" /><!--해당 레이아웃 포함하기-->
 
     <!-- TITLE (FOLDED) LAYOUT (MUST BE AT LEAST 2x times SMALLER than content layout above) -->
     <include layout="@layout/cell_title_layout" />

@@ -75,7 +75,9 @@ class FoldAnimation(
     }
 
     override fun applyTransformation(interpolatedTime: Float, t: Transformation) {
-        val camera = mCamera//카메라 뭐하는 놈인지 공부 필요
+        //애니메이션 관련 블로그
+        //http://m.blog.daum.net/creazier/15311330?np_nil_b=1
+        val camera = mCamera//뷰를 사용자에게 보여주는 역할. 카메라가 돌면 사용자 입장에서 회전하는걸로 보여지게된다.
         val matrix = t.matrix//매트릭스도 공부 필요
         val fromDegrees = mFromDegrees
         val degrees = fromDegrees + (mToDegrees - fromDegrees) * interpolatedTime
@@ -85,8 +87,8 @@ class FoldAnimation(
         camera.getMatrix(matrix)
         camera.restore()
 
-        matrix.preTranslate(-mCenterX, -mCenterY)
-        matrix.postTranslate(mCenterX, mCenterY)
+        matrix.preTranslate(-mCenterX, -mCenterY)//변화하기 전
+        matrix.postTranslate(mCenterX, mCenterY)//변화 후
     }
 
     override fun toString(): String {
