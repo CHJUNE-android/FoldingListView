@@ -260,6 +260,7 @@
 
             </RelativeLayout>
             <!--LinearLayout 그래비티 및 Relative 관계 설정으로 화면 크기에 대응되도록 설정해주는 방법 터득합시다-->
+            <!--잔디가 왜 안심어지나-->
             <RelativeLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
